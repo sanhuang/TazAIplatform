@@ -30,3 +30,6 @@
 
 - [01-business-goals.md](../01-business-goals.md)  
 - [02-system-architecture.md](../02-system-architecture.md)  
+- [03-roadmap.md](../03-roadmap.md)  
+- [04-knowledge-operating-system.md](../04-knowledge-operating-system.md)  
+ 

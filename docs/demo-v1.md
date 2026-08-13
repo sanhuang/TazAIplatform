@@ -15,7 +15,8 @@ details out of the public repository.
    runs can be invoked manually or by cron.
 4. Explain the current agents: `main` for daily questions, `deep` for research,
    `graph` for visual work, and `task` for background jobs.
-5. Close with the roadmap: RAG import, observability, Kubernetes, and GitOps.
+5. Close with the roadmap: currently Phase 2a (Personal Knowledge OS), then RAG
+   vectors, observability, Kubernetes, and GitOps—without claiming those as Done.
 
 ## Notes
 
