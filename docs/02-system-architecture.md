@@ -1,7 +1,7 @@
 # 02 — 系統架構（System Architecture）
 
-> **文件狀態：** v0.3 — 現況與目標分層  
-> **最後更新：** 2026-08-14  
+> **文件狀態：** v0.3 — 現況與目標分層
+> **最後更新：** 2026-08-14
 > **相關文件：** [01-business-goals.md](./01-business-goals.md) · [03-roadmap.md](./03-roadmap.md) · [04-knowledge-operating-system.md](./04-knowledge-operating-system.md) · [adr/0001-orchestrator-openclaw.md](./adr/0001-orchestrator-openclaw.md)
 
 ---
@@ -18,7 +18,13 @@
 
 公開作品集不記載私人 FQDN、完整運維 runbook 或密鑰；地端細節見本機運維文件／Infra repo。
 
-### 架構圖（v1）
+### 架構圖（v2 現況）
+
+![Architecture v2](../assets/architecture-v2.png)
+
+> **現況運行架構圖（Phase 2a · 繁中版）：** 比照 v1 視覺風格與淺色主題，呈現遠端 VPN + TLS 邊緣進入地端 Host、三 repo 拆分（TazInfra / TazClaw / TazN8n）、知識本體 bind mount（TazKnowledges）以及與 Phase 2b Planned 區塊（Vector DB、Observability、Kubernetes）的視覺隔離。
+
+### 架構圖（v1 演進路徑）
 
 ![Architecture v1](../assets/architecture-v1.png)
 
@@ -322,6 +328,7 @@ OpenClaw / n8n / API
 | v0.1 | 2026-06-13 | 初始架構文件，Phase 0                              |
 | v0.2 | 2026-08-01 | 整併三 repo 現況、信任邊界、PKOS／RAG 資料流；與路線圖 Phase 校準 |
 | v0.3 | 2026-08-14 | TazKnowledges 知識層、architecture-v1 圖資、Agents／2a 中後期資料流 |
+| v0.4 | 2026-08-14 | 新增現況運行架構圖（v3 圖資 `assets/architecture-v3.png`，採用 v1 明亮視覺風格與繁中說明） |
 
 
 ---
@@ -330,7 +337,7 @@ OpenClaw / n8n / API
 
 - [x] 現況架構（Infra + 應用拆分）
 - [x] ADR-001：Orchestrator 選型（OpenClaw）
-- [x] 架構圖資產（公開用 PNG，無私人網域）— `assets/architecture-v1.png`
+- [x] 架構圖資產（公開用 PNG，無私人網域）— `assets/architecture-v1.png` 與 `assets/architecture-v2.png`
 - [ ] ADR-002：PostgreSQL 使用邊界（n8n vs OpenClaw）
 - [ ] ADR-003：向量庫選型
 - [ ] 資料流圖 v1（RAG Pipeline）定稿（向量段）

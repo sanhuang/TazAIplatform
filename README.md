@@ -34,7 +34,7 @@
 | 2b 正式 RAG／向量庫 | ⏳ |
 | 3～5 Observability／K8s／GitOps | ⏳ |
 
-下一步不是先上 Kubernetes，而是 **把已有知識資產用滿並接向量 RAG**（PKOS 全文見 [docs/04-knowledge-operating-system.md](./docs/04-knowledge-operating-system.md)，資訊圖見 [docs/assets/pkos-overview.png](./docs/assets/pkos-overview.png)；架構演進圖見 [assets/architecture-v1.png](./assets/architecture-v1.png)）。
+下一步不是先上 Kubernetes，而是 **把已有知識資產用滿並接向量 RAG**（PKOS 全文見 [docs/04-knowledge-operating-system.md](./docs/04-knowledge-operating-system.md)，資訊圖見 [docs/assets/pkos-overview.png](./docs/assets/pkos-overview.png)；現況架構圖見 [assets/architecture-v3.png](./assets/architecture-v3.png)，演進路徑圖見 [assets/architecture-v1.png](./assets/architecture-v1.png)）。
 
 ## 我負責什麼（vs 上游）
 
