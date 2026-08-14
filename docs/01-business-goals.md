@@ -1,7 +1,7 @@
 # 01 — 業務目標（Business Goals）
 
-> **文件狀態：** Phase 2a（知識作業系統）進行中  
-> **最後更新：** 2026-08-01  
+> **文件狀態：** Phase 2a（知識作業系統）中後期  
+> **最後更新：** 2026-08-14  
 > **相關文件：** [02-system-architecture.md](./02-system-architecture.md) · [03-roadmap.md](./03-roadmap.md) · [04-knowledge-operating-system.md](./04-knowledge-operating-system.md)
 
 ---
@@ -22,7 +22,7 @@
 |------|------|------|
 | AI Agent Platform | OpenClaw 驅動的多 Agent 工作流 | ✅ |
 | Docker Compose + Infra 拆分 | 共用 DB／Redis／HTTPS 邊緣；應用獨立 repo | ✅ |
-| Personal Knowledge OS | Markdown／CSV／ADR 知識資產 + 匯入工作流 | 🔄 |
+| Personal Knowledge OS | TazKnowledges Vault＋kb-ID 治理＋keyword／chunk ingest | 🔄 |
 | RAG 知識搜尋 | 向量庫 + Agent 檢索 | ⏳ |
 | Observability Platform | Prometheus／Grafana／Loki | ⏳ |
 | Kubernetes Migration | Compose → K8s 與 CKAD 實戰 | ⏳ |
@@ -42,16 +42,18 @@
 
 ## 核心使用場景
 
-| 場景 | 專案／知識域 | 優先級 | 說明 |
+| 場景 | 邏輯域／專案 | 優先級 | 說明 |
 |------|--------------|--------|------|
-| 財報整理／台股追蹤 | `stock-infos`／`knowledge/stocks` | 高 | 新聞、法說、財報分析 |
-| 技術文件搜尋 | `knowledge/aws` 等 | 高 | AWS／K8s／CKAD／DVA（RAG 準備中） |
+| 財報整理／台股追蹤 | `stocks`／workspace `stock-infos` | 高 | 新聞、法說、財報；實體知識在 TazKnowledges Finance |
+| 技術文件搜尋 | `aws`／`k8s`／`sre` 等邏輯域 | 高 | Vault `01-Tech`＋RAG 準備中（keyword 已有） |
 | 新聞摘要與分類 | `stock-infos` | 高 | 利多／利空／資金輪動／風險 |
-| 求職管線 | `career` · `job-search` · `interview` | 高 | STAR、廣搜、面試 brief |
-| PDF 歸檔 | `pdf-converter` | 中 | OCR → MD → 知識庫 |
+| 求職管線 | `career` · workspace `job-search`／`interview` | 高 | STAR、廣搜、面試 brief；Career Vault 最厚 |
+| PDF 歸檔 | `pdf-converter` → rawdata／aigen | 中 | OCR → MD → 策展進 Vault |
 | 基礎設施監控與通知 | `line-notify` 等 | 中 | Gateway／Docker health |
 | AWS 成本分析 | — | 中 | 待建 |
 | Grafana Alert 根因分析 | — | 中 | Observability 整合後 |
+
+邏輯域與實體路徑對照見 [04-knowledge-operating-system.md](./04-knowledge-operating-system.md)。
 
 ---
 
@@ -65,6 +67,8 @@
 | `deep` | 研究／較深任務 |
 | `graph` | 視覺／圖表類 |
 | `task` | 背景任務 |
+| `m1pro` | Companion Node（本機節點執行） |
+| `m2max` | Companion Node（本機節點執行；部分 daily／長任務） |
 
 ---
 
@@ -78,11 +82,14 @@
 - [x] Infra 拆分：Postgres／Redis／Caddy／VPN 遠端 UI
 - [x] n8n Queue Mode 與共用網路
 
-### Phase 2a（進行中）
+### Phase 2a（中後期）
 
-- [ ] `knowledge/` 目錄與匯入工作流可重複執行
-- [ ] knowledge-builder：inbox → staging draft 跑通
+- [x] TazKnowledges 生命週期（`rawdata → aigen → obsidian → rag`）與 OpenClaw bind
+- [x] kb-ID／`status/verified`／`rag-include` 治理
+- [x] Keyword／chunk ingest（高信任文件進索引；**非**向量 RAG）
+- [ ] knowledge-builder：真實 inbox → staging draft → 策展進 Vault 習慣化
 - [ ] 重要對話習慣改為提煉 Markdown（見 [04](./04-knowledge-operating-system.md)）
+- [ ] 技術／stocks 精煉資產加厚（Career 已相對成熟）
 
 ### 最終交付（Phase 5）
 

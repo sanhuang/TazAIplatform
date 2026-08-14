@@ -9,18 +9,18 @@
 |--|--|
 | **問題** | 個人知識、求職、投資情報分散；需要可重複執行的 Agent 管線，而非一次性聊天 |
 | **做法** | OpenClaw Gateway 編排 Agent；任務以 workspace 專案落地；基礎設施拆到獨立 Infra repo（共用 DB／Redis／HTTPS 邊緣） |
-| **現況** | Compose 可運行；多 Agent；求職／台股等管線已驗證；遠端 HTTPS 經 VPN + 反向代理；**Phase 2：知識作業系統／RAG 準備** |
-| **下一步** | `knowledge/` 匯入與向量搜尋、Observability、Kubernetes（見 [docs/03-roadmap.md](./docs/03-roadmap.md)） |
+| **現況** | Compose 可運行；多 Agent；求職／台股等管線已驗證；遠端 HTTPS 經 VPN + 反向代理；**Phase 2a 中後期**：TazKnowledges Vault＋kb-ID＋keyword／chunk ingest |
+| **下一步** | knowledge-builder E2E、向量搜尋（Phase 2b）、Observability、Kubernetes（見 [docs/03-roadmap.md](./docs/03-roadmap.md)） |
 
 ## Done / In progress / Planned
 
 | 狀態 | 項目 |
 |------|------|
-| **Done** | OpenClaw Docker Compose Gateway；多 Agent（`main`／`deep`／`graph`／`task`）；workspace 任務（求職管線、台股情報等）；Infra 拆分（共用 `taz-shared`、Postgres、Redis、Caddy）；n8n Queue Mode；遠端 Control UI（VPN + TLS）；作品集文件與 ADR |
-| **In progress** | Personal Knowledge OS（Markdown 知識資產、knowledge-builder 匯入）；RAG／向量庫準備；預算與模型分級 |
+| **Done** | OpenClaw Docker Compose Gateway；多 Agent（含 Companion Node）；workspace 任務（求職管線、台股情報等）；Infra 拆分（共用 `taz-shared`、Postgres、Redis、Caddy）；n8n Queue Mode；遠端 Control UI（VPN + TLS）；作品集文件與 ADR；TazKnowledges 生命週期與 keyword／chunk ingest |
+| **In progress** | Personal Knowledge OS 策展習慣與 knowledge-builder E2E；技術／stocks 精煉資產加厚；向量庫準備（ADR／embedding） |
 | **Planned** | 向量庫正式上線、Prometheus／Grafana／Loki、Compose → Kubernetes、GitOps CI/CD |
 
-**階段一句話：** Phase 0～1 已完成；目前在 **Phase 2a（知識作業系統）**，尚未進入 K8s。
+**階段一句話：** Phase 0～1 已完成；目前在 **Phase 2a 中後期（知識作業系統）**，keyword ingest 已有、向量 RAG 尚未上線；尚未進入 K8s。
 
 ## 來源與轉型脈絡（AI 使用者 → Platform Builder）
 
@@ -30,11 +30,11 @@
 |-------|------|
 | 0 文件 + Agent 基線 | ✅ |
 | 1 MVP（Infra／DB／Redis／Caddy／n8n） | ✅ |
-| **2a Knowledge OS** | **🔄 目前焦點** |
+| **2a Knowledge OS** | **🔄 中後期（Vault＋治理＋keyword ingest）** |
 | 2b 正式 RAG／向量庫 | ⏳ |
 | 3～5 Observability／K8s／GitOps | ⏳ |
 
-下一步不是先上 Kubernetes，而是 **累積可重用知識資產**（PKOS 全文見 [docs/04-knowledge-operating-system.md](./docs/04-knowledge-operating-system.md)，資訊圖見 [docs/assets/pkos-overview.png](./docs/assets/pkos-overview.png)）。
+下一步不是先上 Kubernetes，而是 **把已有知識資產用滿並接向量 RAG**（PKOS 全文見 [docs/04-knowledge-operating-system.md](./docs/04-knowledge-operating-system.md)，資訊圖見 [docs/assets/pkos-overview.png](./docs/assets/pkos-overview.png)；架構演進圖見 [assets/architecture-v1.png](./assets/architecture-v1.png)）。
 
 ## 我負責什麼（vs 上游）
 
@@ -51,14 +51,14 @@ User / Cron / CLI
         │
         ▼
 OpenClaw Gateway（應用 repo）
-  Agents: main · deep · graph · task
+  Agents: main · deep · graph · task · m1pro · m2max
         │
         │  Docker network: taz-shared
-        ├──────────────────┐
-        ▼                  ▼
-Infra（獨立 repo）      n8n（應用 repo）
-  Postgres · Redis       Queue Mode
-  Caddy（HTTPS 邊緣）
+        ├──────────────────┬──────────────────┐
+        ▼                  ▼                  ▼
+Infra（獨立 repo）      n8n（應用 repo）   TazKnowledges
+  Postgres · Redis       Queue Mode         Vault + rag/
+  Caddy（HTTPS 邊緣）                        （bind 掛載）
         │
         ▼
 Remote access: VPN → Caddy → Gateway / n8n

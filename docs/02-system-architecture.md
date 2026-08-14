@@ -1,7 +1,7 @@
 # 02 — 系統架構（System Architecture）
 
-> **文件狀態：** v0.2 — 現況與目標分層  
-> **最後更新：** 2026-08-01  
+> **文件狀態：** v0.3 — 現況與目標分層  
+> **最後更新：** 2026-08-14  
 > **相關文件：** [01-business-goals.md](./01-business-goals.md) · [03-roadmap.md](./03-roadmap.md) · [04-knowledge-operating-system.md](./04-knowledge-operating-system.md) · [adr/0001-orchestrator-openclaw.md](./adr/0001-orchestrator-openclaw.md)
 
 ---
@@ -12,15 +12,21 @@
 | 層       | 內容                                            | 狀態             |
 | ------- | --------------------------------------------- | -------------- |
 | **現況**  | 三 repo：TazInfra → TazClaw／TazN8n；VPN + TLS 邊緣 | ✅ 運行中（2026-07） |
-| **知識層** | Personal Knowledge OS → RAG                   | 🔄 Phase 2     |
-| **目標**  | Vector DB、Observability、Kubernetes、GitOps     | ⏳ Phase 2～5    |
+| **知識層** | TazKnowledges（PKOS 實體）→ keyword ingest → 向量 RAG | 🔄 Phase 2a／2b |
+| **目標**  | Vector DB、Observability、Kubernetes、GitOps     | ⏳ Phase 2b～5   |
 
 
 公開作品集不記載私人 FQDN、完整運維 runbook 或密鑰；地端細節見本機運維文件／Infra repo。
 
+### 架構圖（v1）
+
+![Architecture v1](../assets/architecture-v1.png)
+
+> 資訊圖對應求職／平台演進路徑（Compose → K8s → Observability）。**實作現況**仍停在 Compose + PKOS／keyword ingest；K8s 與監控屬後續 Phase。
+
 ---
 
-## 現況架構（三 repo 權責）
+## 現況架構（運行 repo + 知識本體）
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -29,23 +35,31 @@
 │  ┌─ TazInfra（共用基礎設施，最先啟動）─────────────────────┐ │
 │  │  taz-shared network · Postgres · Redis · Caddy（TLS）   │ │
 │  │  NetBird 腳本（主機級 VPN，非 container）                │ │
+│  │  skills/（knowledge-builder 等權威來源）                │ │
 │  └─────────────────────────────────────────────────────────┘ │
-│           │ 提供 network / DB / Redis / TLS 終止              │
+│           │ 提供 network / DB / Redis / TLS / skills          │
 │           ▼                                                  │
 │  ┌─ TazClaw ────────────┐    ┌─ TazN8n ──────────────────┐  │
 │  │  OpenClaw Gateway    │    │  n8n Queue Mode           │  │
 │  │  Agents / workspace  │    │  main + workers           │  │
 │  │  cron / skills       │    │  Workflow 編排與排程      │  │
-│  └──────────────────────┘    └───────────────────────────┘  │
+│  └──────────┬───────────┘    └───────────────────────────┘  │
+│             │ bind mount（ro Vault／raw；rw aigen）           │
+│             ▼                                                │
+│  ┌─ TazKnowledges（知識本體，非容器）──────────────────────┐ │
+│  │  rawdata → aigen → obsidian → rag（chunks／keyword）   │ │
+│  └─────────────────────────────────────────────────────────┘ │
 └──────────────────────────────────────────────────────────────┘
 ```
 
 
-| Repo         | 擁有什麼                                                 | 不擁有什麼                                 |
-| ------------ | ---------------------------------------------------- | ------------------------------------- |
-| **TazInfra** | `taz-shared`、Postgres、Redis、Caddy、NetBird 連線腳本       | 業務工作流、Agent prompt、n8n credentials 內容 |
-| **TazClaw**  | OpenClaw gateway／cli、workspace、agent 設定、應用側 API keys | 共用 DB／Redis 實例、邊緣 TLS、VPN             |
-| **TazN8n**   | n8n main + workers、本機 `n8n_data`、encryption key      | Postgres／Redis 容器本體（連 TazInfra）       |
+| Repo／資產            | 擁有什麼                                                 | 不擁有什麼                                 |
+| ------------------ | ---------------------------------------------------- | ------------------------------------- |
+| **TazInfra**       | `taz-shared`、Postgres、Redis、Caddy、NetBird 連線腳本、共用 skills | 業務工作流、Agent prompt、n8n credentials 內容 |
+| **TazClaw**        | OpenClaw gateway／cli、workspace、agent 設定、應用側 API keys | 共用 DB／Redis 實例、邊緣 TLS、VPN、知識本體目錄     |
+| **TazN8n**         | n8n main + workers、本機 `n8n_data`、encryption key      | Postgres／Redis 容器本體（連 TazInfra）       |
+| **TazKnowledges**  | 生命週期目錄、Obsidian Vault、kb-ID、RAG 執行期產物骨架              | Gateway／Infra 容器、公開作品集敘事              |
+| **TazAIplatform**  | 公開作品集、roadmap、ADR、Demo                               | 運行時密鑰、私人網域、完整 runbook                |
 
 
 ### 邏輯簡圖（作品集用）
@@ -55,14 +69,14 @@ User / Cron / CLI
         │
         ▼
 OpenClaw Gateway（TazClaw）
-  Agents: main · deep · graph · task
+  Agents: main · deep · graph · task · m1pro · m2max
         │
         │  Docker network: taz-shared
-        ├──────────────────┐
-        ▼                  ▼
-Infra（TazInfra）      n8n（TazN8n）
-  Postgres · Redis       Queue Mode
-  Caddy（HTTPS 邊緣）    workers × N
+        ├──────────────────┬──────────────────┐
+        ▼                  ▼                  ▼
+Infra（TazInfra）      n8n（TazN8n）     TazKnowledges
+  Postgres · Redis       Queue Mode       Vault + rag/
+  Caddy（HTTPS 邊緣）    workers × N      （bind，非網路服務）
         │
         ▼
 Remote: VPN → Caddy → Gateway / n8n
@@ -73,7 +87,7 @@ Remote: VPN → Caddy → Gateway / n8n
 ```
 1) TazInfra  up（network / DB / Redis / Caddy）
 2) 主機 NetBird（遠端需要時）
-3) TazClaw   up
+3) TazClaw   up（掛載 TazKnowledges）
 4) TazN8n    up --scale n8n-worker=N
 ```
 
@@ -121,7 +135,7 @@ VPN（WireGuard 類）──► 邊緣 TLS（Caddy）──► taz-shared 內網
                            │
 ┌──────────────────────────▼──────────────────────────────────┐
 │                   OpenClaw (Orchestrator)                    │
-│         main · deep · graph · task（+ 可擴充專責 Agent）      │
+│    main · deep · graph · task · m1pro · m2max（可擴充）      │
 └──────────────────────────┬──────────────────────────────────┘
                            │
         ┌──────────────────┼──────────────────┐
@@ -150,8 +164,8 @@ VPN（WireGuard 類）──► 邊緣 TLS（Caddy）──► taz-shared 內網
 | 關聯式 DB       | PostgreSQL（TazInfra）        | Metadata、n8n 狀態  | ✅               |
 | 快取／佇列        | Redis（TazInfra）             | n8n Bull queue 等 | ✅               |
 | 邊緣           | Caddy + VPN                 | HTTPS、遠端存取       | ✅               |
-| 知識資產         | Markdown／CSV／ADR（PKOS）      | Agent 可重用知識      | 🔄              |
-| 向量庫          | Qdrant／pgvector（待 ADR）      | Embedding 搜尋     | ⏳               |
+| 知識資產         | TazKnowledges（Vault＋kb-ID＋keyword index） | Agent 可重用知識 | 🔄 Phase 2a |
+| 向量庫          | Qdrant／pgvector（待 ADR）      | Embedding 搜尋     | ⏳ Phase 2b      |
 | 物件儲存         | MinIO／S3（待 ADR）             | PDF、原始文件         | ⏳               |
 | 容器化          | Docker Compose → Kubernetes | 部署               | Compose ✅／K8s ⏳ |
 | 監控           | Prometheus + Grafana + Loki | Observability    | ⏳               |
@@ -166,12 +180,18 @@ VPN（WireGuard 類）──► 邊緣 TLS（Caddy）──► taz-shared 內網
 
 - **角色：** 平台 Orchestrator；Agent 調度與 workspace 管線
 - **部署：** Docker Compose（gateway；cli profile 可選）
-- **Workspace：** 任務專案與知識來源；Documents 可唯讀掛載
+- **Workspace：** 任務專案與知識來源；Documents／Vault 可唯讀掛載 TazKnowledges
 
 ### n8n（TazN8n）
 
 - **角色：** 視覺化／排程工作流；Queue Mode 執行卸載至 workers
 - **依賴：** TazInfra Postgres + Redis；encryption key 在應用側
+
+### TazKnowledges（知識本體）
+
+- **角色：** Personal Knowledge OS 的實體儲存與治理
+- **生命週期：** `rawdata` → `aigen` → `obsidian`（策展）→ `rag`（執行期索引）
+- **現況：** keyword／chunk ingest 已跑；embedding／vector-db 待 Phase 2b
 
 ### 資料層
 
@@ -180,7 +200,7 @@ VPN（WireGuard 類）──► 邊緣 TLS（Caddy）──► taz-shared 內網
 | ------------ | --------------------------------- | ----------- |
 | PostgreSQL   | n8n 與未來 metadata；OpenClaw 可選另開 DB | ✅ Phase 1   |
 | Redis        | n8n queue；快取／Session（擴充中）         | ✅ Phase 1   |
-| Knowledge 目錄 | 可版本控制的 MD／CSV／ADR                 | 🔄 Phase 2a |
+| TazKnowledges | Vault、kb-ID、chunks／keyword        | 🔄 Phase 2a |
 | Vector DB    | RAG Embedding                     | ⏳ Phase 2b  |
 | MinIO／S3     | PDF、圖片等原始素材                       | ⏳ Phase 2   |
 
@@ -208,19 +228,25 @@ Cron / CLI / Control UI
 OpenClaw Agent → workspace projects → 產出 artifacts（日期目錄）
 ```
 
-### Phase 2 目標（知識 → RAG）
+### Phase 2 知識 → RAG（現況 + 目標）
 
 ```
 原始素材 (PDF / Chat export / CSV)
         │
         ▼
-knowledge-builder（inbox → staging draft）
-        │ 人工審閱
-        ▼
-knowledge/（Markdown · CSV · ADR）
+rawdata／inbox
         │
         ▼
-Chunk + Embedding → Vector DB + PostgreSQL Metadata
+knowledge-builder（staging draft）或 aigen/<agent>/
+        │ 人工審閱
+        ▼
+obsidian/（kb-* · verified · rag-include）
+        │
+        ▼
+rag_ingest → chunks + keyword index     ← Phase 2a（已有）
+        │
+        ▼
+Embedding → Vector DB + Metadata        ← Phase 2b（待建）
         │
         ▼
 OpenClaw Agent 檢索 → 分析／摘要／通知
@@ -237,13 +263,15 @@ TazAIplatform/
 ├── README.md
 ├── HISTORY.md
 ├── SKILLS.md
+├── assets/
+│   └── architecture-v1.png              # 平台演進資訊圖
 ├── docs/
 │   ├── 01-business-goals.md
 │   ├── 02-system-architecture.md
 │   ├── 03-roadmap.md
 │   ├── 04-knowledge-operating-system.md
 │   ├── demo-v1.md
-│   ├── assets/                          # PKOS 等圖資（如 pkos-overview.png）
+│   ├── assets/                          # PKOS 等圖資（pkos-overview.png）
 │   └── adr/
 ├── workflows/
 │   └── knowledge-import.md
@@ -293,6 +321,7 @@ OpenClaw / n8n / API
 | ---- | ---------- | ------------------------------------------- |
 | v0.1 | 2026-06-13 | 初始架構文件，Phase 0                              |
 | v0.2 | 2026-08-01 | 整併三 repo 現況、信任邊界、PKOS／RAG 資料流；與路線圖 Phase 校準 |
+| v0.3 | 2026-08-14 | TazKnowledges 知識層、architecture-v1 圖資、Agents／2a 中後期資料流 |
 
 
 ---
@@ -301,7 +330,7 @@ OpenClaw / n8n / API
 
 - [x] 現況架構（Infra + 應用拆分）
 - [x] ADR-001：Orchestrator 選型（OpenClaw）
+- [x] 架構圖資產（公開用 PNG，無私人網域）— `assets/architecture-v1.png`
 - [ ] ADR-002：PostgreSQL 使用邊界（n8n vs OpenClaw）
 - [ ] ADR-003：向量庫選型
-- [ ] 架構圖資產（公開用 PNG，無私人網域）
-- [ ] 資料流圖 v1（RAG Pipeline）定稿
+- [ ] 資料流圖 v1（RAG Pipeline）定稿（向量段）

@@ -13,13 +13,18 @@
 | 2026-07 | n8n Queue Mode | 與 OpenClaw 並列掛入共用 Infra；main + workers | 架構文件三 repo 權責 |
 | 2026-07 | 作品集 v1 | 本目錄重組：README／HISTORY／ADR／Demo；運維手冊移出公開範圍 | 本 repo 文件樹 |
 | 2026-08 | 階段校準 + PKOS | 路線圖確認 Phase 0～1 完成、Phase 2a 進行中；howto 整併入 docs | [docs/03-roadmap.md](./docs/03-roadmap.md)、[docs/04-knowledge-operating-system.md](./docs/04-knowledge-operating-system.md) |
+| 2026-08 | TazKnowledges 生命週期 | `rawdata → aigen → obsidian → rag`；kb-ID／verified／rag-include 治理 | 知識 repo 架構指南（去敏）、ledger 概念 |
+| 2026-08 | Keyword／chunk ingest | 高信任 Vault 筆記進 chunks＋keyword index；**非**向量 RAG | ingest 腳本名、manifest 概念（無私人內容） |
+| 2026-08 | knowledge-builder Skill | TazInfra 共用 Skill；作品集接線 SKILLS／workflows | [SKILLS.md](./SKILLS.md)、[workflows/knowledge-import.md](./workflows/knowledge-import.md) |
+| 2026-08 | Companion Node／Obsidian | m1pro／m2max 節點與 daily note 管線穩定化 | Agent 分工表、架構文件 |
+| 2026-08-14 | 文件與現況對齊 | Phase 2a 中後期定位；architecture-v1／pkos 圖資入庫 | [docs/02](./docs/02-system-architecture.md)、[docs/03](./docs/03-roadmap.md) |
 
 ## 下一里程碑（預告）
 
 | 目標 | 對應 Phase |
 |------|------------|
-| `knowledge/` + knowledge-builder 匯入跑通 | Phase 2a |
-| RAG 匯入與向量搜尋驗證 | Phase 2b |
+| knowledge-builder E2E（真實 inbox → 策展） | Phase 2a |
+| ADR-003＋embedding／vector 搜尋驗證 | Phase 2b |
 | Grafana／Loki 分層看板 | Phase 3 |
 | Compose → Kubernetes | Phase 4 |
 

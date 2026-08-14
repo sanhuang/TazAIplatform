@@ -1,8 +1,8 @@
 # ADR-0001：選用 OpenClaw 作為 Orchestrator
 
-- **狀態：** Accepted  
-- **日期：** 2026-07-25  
-- **決策者：** 專案維護者  
+- **狀態：** Accepted
+- **日期：** 2026-07-25
+- **決策者：** 專案維護者
 
 ## 背景
 
@@ -22,14 +22,14 @@
 
 ## 後果
 
-- **正向：** 快速驗證多 Agent 與排程；面試可講「平台 + 管線」而非單次 demo。  
-- **代價：** 需追上游版本；設定與 secret 必須與公開作品集分離。  
+- **正向：** 快速驗證多 Agent 與排程；面試可講「平台 + 管線」而非單次 demo。
+- **代價：** 需追上游版本；設定與 secret 必須與公開作品集分離。
 - **待決（不在本 ADR）：** 向量庫（Qdrant vs pgvector）、物件儲存（MinIO vs S3）、排程是否升級 Temporal。
 
 ## 參考
 
-- [01-business-goals.md](../01-business-goals.md)  
-- [02-system-architecture.md](../02-system-architecture.md)  
-- [03-roadmap.md](../03-roadmap.md)  
-- [04-knowledge-operating-system.md](../04-knowledge-operating-system.md)  
- 
+- [01-business-goals.md](../01-business-goals.md)
+- [02-system-architecture.md](../02-system-architecture.md)
+- [03-roadmap.md](../03-roadmap.md)
+- [04-knowledge-operating-system.md](../04-knowledge-operating-system.md)
+

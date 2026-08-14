@@ -1,7 +1,7 @@
 # 03 — 開發路線圖（Roadmap）
 
-> **文件狀態：** Phase 2 進行中（知識作業系統／RAG 準備）  
-> **最後更新：** 2026-08-01  
+> **文件狀態：** Phase 2a 中後期（知識作業系統）；Phase 2b 準備中  
+> **最後更新：** 2026-08-14  
 > **節奏：** 2 週一個成果，每 3 天檢查一次  
 > **相關文件：** [01-business-goals.md](./01-business-goals.md) · [02-system-architecture.md](./02-system-architecture.md) · [04-knowledge-operating-system.md](./04-knowledge-operating-system.md)
 
@@ -13,17 +13,20 @@
 |------|------|
 | README Done | Compose、多 Agent、workspace 管線、Infra 拆分、VPN + TLS 遠端 UI |
 | 三 repo 架構 | TazInfra（network／DB／Redis／Caddy／NetBird）→ TazClaw／TazN8n 已落地 |
-| howto／PKOS | 分水嶺：從「會用 AI」轉「累積可重用知識資產」；下一步是 `knowledge/` + knowledge-builder |
-| 本路線圖 | **Phase 0～1 實質完成**；目前位於 **Phase 2 入口**（知識庫／RAG 準備，非 K8s） |
+| 知識本體 | **TazKnowledges**：`rawdata → aigen → obsidian → rag`；kb-ID 治理與 keyword／chunk ingest 已跑通 |
+| 本路線圖 | **Phase 0～1 完成**；目前位於 **Phase 2a 中後期**（非入口）；向量 RAG 屬 Phase 2b |
 
 ```
 Phase 0 文件+基線     ✅
 Phase 1 MVP 資料層    ✅（經 TazInfra；n8n Queue Mode 一併就緒）
-Phase 2 知識／RAG     🔄 ← 你在這裡
+Phase 2a Knowledge OS 🔄 ← 你在這裡（中後期）
+Phase 2b 向量 RAG     ⏳（chunks／keyword 有；embedding／vector-db 空）
 Phase 3 Observability ⏳
 Phase 4 Kubernetes    ⏳
 Phase 5 Production    ⏳
 ```
+
+對照「2 週一個成果」節奏圖：Day 1–9（環境／資料層／Agent 工作流）已完成；目前對應 **Day 10–12（RAG 與搜尋）前半**——有 ingest／chunks，尚無向量搜尋 Demo。
 
 ---
 
@@ -33,7 +36,8 @@ Phase 5 Production    ⏳
 | ----- | ------------ | ---- | ---- |
 | 0 | 2026-06 ~ 07 | 證照衝刺 + 文件架構 + Agent 基線 | ✅ 完成 |
 | 1 | 2026-07 | AI Platform MVP（共用資料層 + 應用拆分） | ✅ 完成 |
-| 2 | 2026-08 ~ | RAG 與自動化工作流（先建 Knowledge OS） | 🔄 進行中 |
+| 2a | 2026-08 ~ | Personal Knowledge OS（Vault、治理、匯入） | 🔄 中後期 |
+| 2b | 接續 | 正式 RAG／向量庫 | ⏳ 準備中 |
 | 3 | 待排 | Observability | ⏳ 待開始 |
 | 4 | 待排 | Kubernetes Migration | ⏳ 待開始 |
 | 5 | 待排 | Production Ready | ⏳ 待開始 |
@@ -86,7 +90,7 @@ Phase 5 Production    ⏳
 | `postgres`／`redis` healthy | ✅（TazInfra） |
 | 文件查詢（workspace） | ✅ |
 | Agent Workflow（cron／手動） | ✅ |
-| 基本知識庫 | ⏳ 過渡中 → Phase 2（檔案索引／draft，向量庫尚未正式上線） |
+| 基本知識庫 | ✅ 過渡完成 → Phase 2a（Vault＋keyword index；向量庫屬 2b） |
 
 詳見 [02-system-architecture.md](./02-system-architecture.md)「現況架構」。
 
@@ -100,28 +104,34 @@ Phase 5 Production    ⏳
 
 ### 為什麼現在不是 K8s？
 
-howto 結論：分水嶺是 **累積 AI 可重用資產**，不是再學一個框架。短期最高報酬是 Personal Knowledge Operating System（PKOS），見 [04-knowledge-operating-system.md](./04-knowledge-operating-system.md)。
+分水嶺是 **累積 AI 可重用資產**，不是再學一個框架。短期最高報酬仍是 Personal Knowledge Operating System（PKOS），見 [04-knowledge-operating-system.md](./04-knowledge-operating-system.md)。
 
-### Phase 2a — Knowledge OS（當前焦點）
+### Phase 2a — Knowledge OS（當前焦點：中後期）
 
-| 待辦 | 要做什麼 |
-|------|----------|
-| **建立 `knowledge/` 目錄** | 依 PKOS 結構：`aws/`／`kubernetes/`／`sre/`／`stocks/`／`career/`／`workflow/`／`projects/`／`adr/` |
-| **knowledge-builder 配置** | 透過 TazInfra Skill（見根目錄 `SKILLS.md`）跑 [workflows/knowledge-import.md](../workflows/knowledge-import.md)：inbox → staging draft |
-| **格式習慣** | 技術／決策／流程優先 Markdown；數據用 CSV；PDF 當來源再轉 MD |
-| **對話提煉** | 不存 Chat History；提煉成 Runbook／筆記／ADR |
-| **M2 可參照檔轉換** | 地端 AI 可參照素材轉為 md／json 等合適索引格式 |
+作品集敘事保留邏輯域（`aws`／`kubernetes`／`sre`／`stocks`／`career`／`workflow`／`projects`／`adr`）；**實體儲存**在 TazKnowledges（Obsidian 主題樹 + 生命週期目錄），對照見 [04](./04-knowledge-operating-system.md)。
+
+| 狀態 | 項目 | 說明 |
+|------|------|------|
+| ✅ 已完成 | TazKnowledges 生命週期 | `rawdata → aigen → obsidian → rag`；OpenClaw bind 契約 |
+| ✅ 已完成 | kb-ID／標籤治理 | `kb-*`、`status/verified`、`rag-include`；ledger |
+| ✅ 已完成 | Keyword／chunk ingest | 高信任文件進 `rag/chunks`＋keyword index（**非**向量 RAG） |
+| ✅ 已完成 | knowledge-builder Skill | 權威在 TazInfra；作品集接線見 [SKILLS.md](../SKILLS.md) |
+| 🔄 進行中 | knowledge-builder E2E | 真實 inbox → staging draft → 策展進 Vault 習慣化 |
+| 🔄 進行中 | 對話提煉習慣 | 重要成果 → Markdown／Runbook，不存整包 Chat |
+| 🔄 進行中 | 精煉技術／stocks 資產 | Career 厚、技術知識與個股研究仍偏薄 |
+| ⏳ 未完成 | 扁平邏輯域完整覆蓋 | 作品集域對照齊；實體目錄不必強求扁平複製 |
 
 ### Phase 2b — RAG Pipeline（接續）
 
 | 待辦 | 要做什麼 |
 |------|----------|
-| **向量庫選型 ADR** | Qdrant vs pgvector（仍待決策） |
-| **匯入與 chunk** | staging 審過後再寫向量庫；首批來源：AWS／CKAD／stocks／career |
+| **向量庫選型 ADR** | Qdrant vs pgvector（仍待決策 → ADR-003） |
+| **Embedding** | 在既有 chunks 上產生 embedding；填滿 `rag/embedding/` |
+| **Vector DB** | 寫入可重建的向量索引；首批來源：AWS／CKAD／stocks／career |
 | **向量搜尋驗證** | 3～5 個代表性查詢測召回；Agent 能依結果回答 |
 | **場景強化** | 股票研究、技術文件搜尋、證照知識整理、新聞摘要 |
 
-**產出：** Knowledge 目錄與匯入工作流；RAG Pipeline；Vector DB；Data Flow Diagram  
+**產出：** Knowledge 生命週期與匯入工作流；RAG Pipeline；Vector DB；Data Flow Diagram  
 
 **完成標準：** 股票研究／技術文件搜尋／證照知識可經 Agent + 知識庫完成，而非單次聊天。
 
@@ -175,6 +185,10 @@ howto 結論：分水嶺是 **累積 AI 可重用資產**，不是再學一個�
 | 2026-07-05 | 0 | 環境與 Agent 基線 | Compose、多 Agent、文件搜尋 |
 | 2026-07 | 1 | Infra 拆分 + 遠端 UI | TazInfra／TazClaw／TazN8n；VPN + TLS |
 | 2026-07 | 1 | 作品集 v1 | README／HISTORY／ADR／Demo |
-| 2026-08-01 | 2 | 階段校準 + PKOS 整併 | 確認位於 Phase 2a；文件併入 docs |
+| 2026-08-01 | 2a | 階段校準 + PKOS 整併 | 確認位於 Phase 2a；文件併入 docs |
+| 2026-08 | 2a | TazKnowledges 策展與 ingest | kb-ID、keyword／chunk index；非向量 RAG |
+| 2026-08 | 2a | Skills／文件治理 | knowledge-builder；Infra docs → Knowledges |
+| 2026-08 | 2a | Companion Node／Obsidian | m1pro／m2max；daily note 管線穩定化 |
+| 2026-08-14 | 2a | 文件與現況對齊 | 定位改為 2a 中後期；架構圖／PKOS 圖資入庫 |
 
 > 每 3 天更新此表格，記錄實際進度與偏差。

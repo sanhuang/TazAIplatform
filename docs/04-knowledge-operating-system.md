@@ -1,11 +1,13 @@
 # 04 — Personal Knowledge Operating System（知識作業系統）
 
-> **文件狀態：** Phase 2a 進行中  
-> **最後更新：** 2026-08-01  
+> **文件狀態：** Phase 2a 中後期  
+> **最後更新：** 2026-08-14  
 > **來源整併：** 原 `howto_AIuser_to_AIPlaform_builder/` 筆記（2026-08-01 併入本文件）；入口摘要見 [README.md](../README.md#來源與轉型脈絡ai-使用者--platform-builder)  
 > **相關：** [03-roadmap.md](./03-roadmap.md) · [workflows/knowledge-import.md](../workflows/knowledge-import.md) · [SKILLS.md](../SKILLS.md)
 
 ![PKOS 總覽](./assets/pkos-overview.png)
+
+> 上圖為作品集**邏輯／習慣**資訊圖。實體儲存在獨立 repo **TazKnowledges**（生命週期目錄 + Obsidian Vault），見下方「實體 vs 邏輯」。
 
 ---
 
@@ -13,13 +15,42 @@
 
 這是 **AI 使用者 → AI Platform Builder** 的分水嶺：重點不再是「如何問出更好的 Prompt」，而是 **如何累積 AI 可重用資產**。
 
-| 具體目標 | 說明 |
-|----------|------|
-| knowledge-builder | 完成 TazInfra Skill 配置，建立個人知識庫工作流 |
-| 格式轉換 | 地端 AI 可參照檔轉成合適索引／資源格式（md、json 等） |
-| 習慣 | 重要成果提煉成 Markdown，而非保存整段對話 |
+| 具體目標 | 說明 | 現況 |
+|----------|------|------|
+| knowledge-builder | TazInfra Skill；inbox → staging draft → 策展 | Skill ✅；E2E 習慣 🔄 |
+| 格式轉換 | 地端素材轉 md／json 等可索引格式 | 進行中 |
+| 習慣 | 重要成果提煉成 Markdown，而非保存整段對話 | 進行中 |
+| Vault／治理 | TazKnowledges + kb-ID + verified／rag-include | ✅ |
+| Keyword ingest | chunks + keyword index（非向量） | ✅ |
+| 向量 RAG | embedding + vector-db | ⏳ Phase 2b |
 
 路線圖位置：見 [03-roadmap.md](./03-roadmap.md) Phase 2a。
+
+---
+
+## 實體 vs 邏輯
+
+| 層 | 是什麼 | 在哪 |
+|----|--------|------|
+| **邏輯域**（作品集敘事） | `aws`／`k8s`／`sre`／`stocks`／`career`／`workflow`／`projects`／`adr` | 本文件與場景描述用的分類 |
+| **實體儲存**（權威） | `rawdata → aigen → obsidian → rag` | **TazKnowledges** repo |
+| **發布／模板** | 少數 published 資產 | TazKnowledges `knowledge/published/`（≠ 整個扁平知識樹） |
+| **消費端** | OpenClaw bind mount（Vault／raw 唯讀；`aigen/openclaw` 可寫） | **TazClaw** |
+
+### 邏輯域 → 實體路徑（對照）
+
+| 邏輯域 | 實體落點（TazKnowledges） |
+|--------|---------------------------|
+| 技術（aws／k8s／sre…） | `obsidian/Knowledge/01-Tech/…` |
+| 投資／stocks | `obsidian/Knowledge/02-Finance/…`（個股研究仍偏薄） |
+| career | `obsidian/Career/…`（目前最厚） |
+| workflow | `obsidian/…` 流程筆記 + `automation/` 腳本／工作流說明 |
+| projects | `obsidian/Projects/…` |
+| adr | 平台 ADR 在本作品集 `docs/adr/`；長期可同步可檢索副本進 Vault |
+| 原始素材 | `rawdata/`（勿直接當 RAG 語料） |
+| 執行期索引 | `rag/`（chunks／keyword 已有；embedding／vector-db 待 2b） |
+
+**原則：** 不必為了對齊資訊圖而複製一套扁平 `knowledge/aws|…` 目錄；Agent 與 RAG 以 **策展後、帶 `kb-*` 的 Vault 筆記** 為準。
 
 ---
 
@@ -37,11 +68,15 @@
 
 建議：`.md` — 可讀、可 Git、可 RAG  
 
+邏輯路徑範例（敘事用）：
+
 ```
 knowledge/aws/lambda-best-practice.md
 knowledge/k8s/ckad/deployment.md
 knowledge/observability/grafana-label-design.md
 ```
+
+實體則寫入 Vault 對應主題樹，並發 `kb-*` ID。
 
 #### 2. 投資研究
 
@@ -67,13 +102,13 @@ knowledge/stocks/adata/
 
 本作品集已有：[`adr/0001-orchestrator-openclaw.md`](./adr/0001-orchestrator-openclaw.md)。  
 
-長期可同步一份到 `knowledge/adr/` 供 Agent 檢索。
+長期可同步一份到 Vault 供 Agent 檢索。
 
 #### 4. 個人流程
 
 範例：求職流程、證照學習、股票分析流程  
 
-建議：`knowledge/workflow/*.md` — 未來 Agent 可直接讀取。
+建議：流程類 Markdown — 未來 Agent 可直接讀取。
 
 #### 5. 原始素材
 
@@ -84,6 +119,8 @@ knowledge/stocks/adata/
 ```
 resume.pdf  →  resume-summary.md  →  再進 RAG
 ```
+
+實體：保留在 `rawdata/`，精煉後進 `obsidian/`。
 
 ### 格式優先級
 
@@ -111,25 +148,23 @@ RAG ≠ 把對話全部丟進去。Chat 裡混有問題、回答、修正、閒�
 
 ### OpenClaw 應該吃什麼？
 
-不是 Chat History，而是 Knowledge：
+不是 Chat History，而是 Knowledge（策展後的 Vault／發布資產）：
 
 ```
-knowledge/
-├─ aws/
-├─ kubernetes/
-├─ sre/
-├─ stocks/
-├─ career/
-├─ workflow/
-├─ projects/
-└─ adr/
+邏輯域（敘事）          實體（TazKnowledges）
+aws / k8s / sre    →   obsidian/Knowledge/01-Tech/…
+stocks             →   obsidian/Knowledge/02-Finance/…
+career             →   obsidian/Career/…
+workflow           →   流程筆記 + automation/
+projects           →   obsidian/Projects/…
+adr                →   docs/adr/（作品集）+ 可選 Vault 副本
 ```
 
 ### Agent 如何運作（目標）
 
 任務：「請幫我分析某檔個股是否值得加碼」
 
-1. 搜尋 `knowledge/stocks/<symbol>/*`
+1. 搜尋知識庫中該標的相關筆記／CSV（經 RAG 或檔案檢索）
 2. 找到歷史分析、財報、法說、持股策略
 3. 再交給 LLM 綜合判斷
 
@@ -141,32 +176,35 @@ knowledge/
 |------|------------|
 | Skill | `knowledge-builder`（權威：`TazInfra/skills/knowledge-builder/`，見 [SKILLS.md](../SKILLS.md)） |
 | 工作流說明 | [workflows/knowledge-import.md](../workflows/knowledge-import.md) |
-| 輸入 | `inbox/`（例：ChatGPT export） |
-| 產出 | `staging/`（draft；審過前不寫向量庫） |
-| 定庫 | 審閱通過 → `knowledge/` →（Phase 2b）Embedding |
+| 輸入 | Skill／工作流約定的 inbox（例：ChatGPT export；實體常落在 TazKnowledges `rawdata/` 或約定 inbox） |
+| 產出 | staging draft（審過前不寫向量庫、不直接當正式 Vault） |
+| 定庫 | 審閱通過 → Obsidian（`kb-*`）→ keyword ingest；Phase 2b 再 Embedding |
 
 ```
-Export → 過濾分類 → 提煉結構化 → staging/.md|.csv|.json
-                                              │ review
-                                              ▼
-                                         knowledge/
-                                              │ Phase 2b
-                                              ▼
-                                      Vector index → Agent
+Export → 過濾分類 → 提煉結構化 → staging draft
+                                      │ review
+                                      ▼
+                               obsidian/（kb-*）
+                                      │ ingest
+                                      ▼
+                         rag/chunks + keyword  →（Phase 2b）vector
+                                      │
+                                      ▼
+                                   Agent
 ```
 
 ---
 
-## 當前兩週行動（Phase 2a）
+## 當前兩週行動（Phase 2a 中後期）
 
-不是 Kubernetes、不是先上完整 RAG——而是：
+不是 Kubernetes、不是「從空目錄開始」——而是把已有 Vault／ingest **用滿**：
 
-1. **建立 `knowledge/` 目錄結構**（可先空目錄 + README）
-2. **跑通 knowledge-builder**：一份真實 inbox → staging draft
+1. **補精煉資產**：技術（AWS／K8s／SRE）與 stocks 筆記加厚；維持 Career 品質
+2. **跑通 knowledge-builder E2E**：一份真實 inbox → staging draft → 策展進 Vault
 3. **養成習慣**：Cursor／Chat 重要成果 → 一篇 Markdown，不存對話
-4. **盤點地端素材**：列出待轉 md／json 的 AI 可參照檔清單
+4. **準備 Phase 2b**：ADR-003 向量庫選型；在既有 chunks 上規劃 embedding
 
-> **如果只能做一件事：** 從今天開始建立 `knowledge/`，並把重要成果轉成 Markdown。長期報酬率通常高於再學一個 AI Framework。
+> **如果只能做一件事：** 把下一個真實問題的結論寫成帶 `kb-*` 的 Markdown，並標 `rag-include`。長期報酬率通常高於再學一個 AI Framework。
 
 ---
 
@@ -175,6 +213,6 @@ Export → 過濾分類 → 提煉結構化 → staging/.md|.csv|.json
 | 文件 | 關係 |
 |------|------|
 | [01-business-goals.md](./01-business-goals.md) | 技術文件搜尋、求職、台股場景依賴本知識層 |
-| [02-system-architecture.md](./02-system-architecture.md) | Phase 2 資料流接在三 repo 現況之上 |
+| [02-system-architecture.md](./02-system-architecture.md) | Phase 2 資料流接在三 repo + TazKnowledges 之上 |
 | [03-roadmap.md](./03-roadmap.md) | Phase 2a／2b 待辦與完成標準 |
 | howto 目錄 | 原始筆記與圖；**以本檔為專案內權威版本** |
